@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revisor de CFDIs</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --text: #1d2330;
+    --muted: #5d6576;
+    --border: #dde1e8;
+    --accent: #1f4e79;
+    --accent-soft: #e8eff7;
+    --grave: #b3261e;
+    --grave-soft: #fbeceb;
+    --obs: #9a6200;
+    --obs-soft: #fdf4e3;
+    --ok: #2e7d32;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  header {
+    background: var(--accent);
+    color: #fff;
+    padding: 18px 32px;
+  }
+  header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  header p { margin: 4px 0 0; opacity: .85; font-size: 14px; }
+  main { max-width: 1280px; margin: 0 auto; padding: 24px 32px 48px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .privacy {
+    display: flex; gap: 10px; align-items: flex-start;
+    background: var(--accent-soft);
+    border: 1px solid #c9d8ea;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+  .privacy svg { flex: 0 0 auto; margin-top: 2px; }
+  #dropzone {
+    border: 2px dashed #9fb3c8;
+    border-radius: 10px;
+    padding: 48px 24px;
+    text-align: center;
+    background: #fbfcfd;
+    transition: background .15s, border-color .15s;
+  }
+  #dropzone.over { background: var(--accent-soft); border-color: var(--accent); }
+  #dropzone h2 { margin: 0 0 6px; font-size: 19px; font-weight: 600; }
+  #dropzone p { margin: 0 0 18px; color: var(--muted); }
+  .btn {
+    display: inline-block;
+    font: inherit; font-weight: 600;
+    padding: 9px 18px;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn.secondary { background: #fff; color: var(--accent); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .config { margin-top: 18px; font-size: 13px; color: var(--muted); }
+  .config code { background: #eef1f5; padding: 1px 6px; border-radius: 4px; color: var(--text); }
+  #progress { margin-top: 16px; color: var(--muted); font-size: 14px; min-height: 20px; }
+
+  .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .toolbar h2 { margin: 0; font-size: 19px; }
+  .toolbar .meta { color: var(--muted); font-size: 13px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .kpi .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+  .kpi .value { font-size: 20px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .kpi.highlight { border-color: var(--accent); background: var(--accent-soft); }
+  .kpi.alert .value { color: var(--grave); }
+
+  h3 { margin: 0 0 12px; font-size: 17px; }
+  .legend { display: flex; gap: 16px; font-size: 13px; color: var(--muted); margin-bottom: 12px; flex-wrap: wrap; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .dot.grave { background: var(--grave); }
+  .dot.obs { background: var(--obs); }
+
+  .finding {
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--obs);
+    background: var(--obs-soft);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+  }
+  .finding.grave { border-left-color: var(--grave); background: var(--grave-soft); }
+  .finding .head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .finding .tipo { font-weight: 600; }
+  .badge { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 10px; color: #fff; background: var(--obs); }
+  .finding.grave .badge { background: var(--grave); }
+  .finding .ref { color: var(--muted); font-size: 13px; }
+  .finding .detalle { margin-top: 4px; }
+  .finding .riesgo { margin-top: 4px; font-size: 13px; color: var(--muted); }
+  .finding .riesgo b { color: var(--text); font-weight: 600; }
+  .empty { color: var(--ok); font-weight: 600; }
+
+  .notice { background: #fff8e1; border: 1px solid #f0d58a; border-radius: 6px; padding: 10px 14px; margin-bottom: 10px; font-size: 14px; }
+  .notice.error { background: var(--grave-soft); border-color: #eab4b0; }
+  .notice ul { margin: 6px 0 0; padding-left: 20px; }
+
+  details summary { cursor: pointer; font-weight: 600; font-size: 16px; }
+  .table-wrap { overflow: auto; max-height: 560px; margin-top: 12px; border: 1px solid var(--border); border-radius: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+  th { position: sticky; top: 0; background: #eef1f5; font-weight: 600; z-index: 1; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:hover td { background: #f7f9fc; }
+  .hidden { display: none !important; }
+  footer { text-align: center; font-size: 12px; color: var(--muted); padding: 0 16px 24px; }
+
+  @media (max-width: 640px) {
+    header, main { padding-left: 16px; padding-right: 16px; }
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Revisor de CFDIs</h1>
+  <p>Conciliación de IVA y detección de riesgos fiscales en CFDI 4.0 y complementos de Pago 2.0</p>
+</header>
+
+<main>
+  <div class="privacy">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f4e79" stroke-width="2" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+    <div><b>Sus archivos no salen de este equipo.</b> Los XML se leen y analizan localmente en su navegador; no se envían a ningún servidor.</div>
+  </div>
+
+  <!-- Carga -->
+  <section id="carga" class="panel">
+    <div id="dropzone">
+      <h2>Arrastre aquí sus XML (o la carpeta que los contiene)</h2>
+      <p>Facturas de ingreso, de gasto y complementos de pago (REP). Puede seleccionar cientos a la vez.</p>
+      <div class="btn-row">
+        <button class="btn" id="btnArchivos" type="button">Seleccionar archivos XML</button>
+        <button class="btn secondary" id="btnCarpeta" type="button">Seleccionar carpeta</button>
+      </div>
+      <input type="file" id="inputArchivos" accept=".xml,text/xml,application/xml" multiple hidden>
+      <input type="file" id="inputCarpeta" webkitdirectory multiple hidden>
+      <div id="progress"></div>
+    </div>
+    <div class="config">Empresa analizada (RFC): <code id="rfcEmpresa"></code></div>
+  </section>
+
+  <!-- Resultados -->
+  <section id="resultados" class="hidden">
+    <div class="toolbar">
+      <div>
+        <h2>Resultados del análisis</h2>
+        <div class="meta" id="metaLote"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="btnExcel" type="button">Descargar reporte en Excel</button>
+        <button class="btn secondary" id="btnOtroLote" type="button">Analizar otro lote</button>
+      </div>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div id="avisos"></div>
+
+    <div class="panel">
+      <h3>Hallazgos</h3>
+      <div class="legend">
+        <span><span class="dot grave"></span>Grave: afecta deducibilidad, acreditamiento o puede generar multa</span>
+        <span><span class="dot obs"></span>Observable: requiere revisión o seguimiento</span>
+      </div>
+      <div id="hallazgos"></div>
+    </div>
+
+    <div class="panel">
+      <details id="detalleCfdis">
+        <summary>Detalle de todos los CFDIs procesados (<span id="numDetalle">0</span>)</summary>
+        <div class="table-wrap"><table id="tablaDetalle"></table></div>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer>Herramienta de apoyo para revisión fiscal. Los resultados deben ser validados por el profesional responsable.</footer>
+
+<script>
+"use strict";
+
+/* ============================================================
+   CONFIGURACIÓN
+   ============================================================ */
+// RFC de la empresa analizada. Los CFDI de tipo "I" que emite son ingresos;
+// los que recibe son gastos.
+const RFC_EMPRESA = "DRE180420QX3";
+const TASA_IVA = 0.16;
+const TOLERANCIA_IVA = 1.00;   // pesos, por redondeo
+const DIA_LIMITE_REP = 5;      // día natural del mes siguiente (Regla 2.7.1.32 RMF)
+
+const GRAVE = "Grave";
+const OBSERVABLE = "Observable";
+const UUID_RE = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/i;
+
+/* ============================================================
+   REGLAS FISCALES
+   ============================================================ */
+
+/**
+ * Fecha límite para emitir el CFDI con complemento de pago (REP).
+ * Regla 2.7.1.32 RMF: a más tardar el 5o día natural del mes inmediato
+ * siguiente a aquel en que se recibió el pago.
+ * Recibe "AAAA-MM-DD..." y devuelve "AAAA-MM-DD".
+ * Ej.: pago 2026-03-15 → límite 2026-04-05; pago 2026-12-20 → 2027-01-05.
+ */
+function fechaLimiteREP(fechaPago) {
+  const [anio, mes] = fechaPago.slice(0, 10).split("-").map(Number);
+  const anioLim = mes === 12 ? anio + 1 : anio;
+  const mesLim = mes === 12 ? 1 : mes + 1;
+  return `${anioLim}-${String(mesLim).padStart(2, "0")}-${String(DIA_LIMITE_REP).padStart(2, "0")}`;
+}
+
+/** true si el REP se emitió después de la fecha límite (se compara por día). */
+function esREPExtemporaneo(fechaEmision, fechaPago) {
+  return fechaEmision.slice(0, 10) > fechaLimiteREP(fechaPago);
+}
+
+/* ============================================================
+   LECTURA DEL XML
+   ============================================================ */
+
+// Busca descendientes por nombre local (sin importar el prefijo del namespace).
+function porNombre(raiz, nombre) {
+  return Array.from(raiz.getElementsByTagName("*")).filter(n => n.localName === nombre);
+}
+function hijosPorNombre(nodo, nombre) {
+  return Array.from(nodo.children).filter(n => n.localName === nombre);
+}
+function num(v) {
+  const n = parseFloat(v);
+  return isNaN(n) ? 0 : n;
+}
+function attr(nodo, nombre) {
+  return nodo ? (nodo.getAttribute(nombre) || "") : "";
+}
+
+/** Convierte el texto de un XML en un objeto CFDI. Lanza Error si no es válido. */
+function parsearCFDI(texto, archivo) {
+  const doc = new DOMParser().parseFromString(texto, "application/xml");
+  if (doc.getElementsByTagName("parsererror").length) {
+    throw new Error("XML mal formado");
+  }
+  const comp = doc.documentElement;
+  if (!comp || comp.localName !== "Comprobante") {
+    throw new Error("No es un CFDI (no contiene el nodo Comprobante)");
+  }
+
+  const emisor = hijosPorNombre(comp, "Emisor")[0];
+  const receptor = hijosPorNombre(comp, "Receptor")[0];
+  const tfd = porNombre(comp, "TimbreFiscalDigital")[0];
+
+  // IVA trasladado: nodo Impuestos del comprobante (no el de cada concepto)
+  const impuestos = hijosPorNombre(comp, "Impuestos")[0];
+  let iva = 0, tieneIva16 = false;
+  if (impuestos) {
+    const traslados = hijosPorNombre(impuestos, "Traslados")[0];
+    if (traslados) {
+      for (const t of hijosPorNombre(traslados, "Traslado")) {
+        if (attr(t, "Impuesto") === "002") {
+          iva += num(attr(t, "Importe"));
+          if (Math.abs(num(attr(t, "TasaOCuota")) - TASA_IVA) < 1e-6) tieneIva16 = true;
+        }
+      }
+    }
+  }
+
+  const cfdi = {
+    archivo,
+    tipoComprobante: attr(comp, "TipoDeComprobante"),
+    version: attr(comp, "Version"),
+    serie: attr(comp, "Serie"),
+    folio: attr(comp, "Folio"),
+    fecha: attr(comp, "Fecha"),
+    rfcEmisor: attr(emisor, "Rfc").toUpperCase(),
+    nombreEmisor: attr(emisor, "Nombre"),
+    rfcReceptor: attr(receptor, "Rfc").toUpperCase(),
+    nombreReceptor: attr(receptor, "Nombre"),
+    subtotal: num(attr(comp, "SubTotal")),
+    descuento: num(attr(comp, "Descuento")),
+    iva,
+    tieneIva16,
+    total: num(attr(comp, "Total")),
+    moneda: attr(comp, "Moneda"),
+    metodoPago: attr(comp, "MetodoPago"),
+    formaPago: attr(comp, "FormaPago"),
+    uuid: attr(tfd, "UUID").trim(),
+    pagos: []
+  };
+  cfdi.uuidValido = UUID_RE.test(cfdi.uuid);
+  cfdi.serieFolio = [cfdi.serie, cfdi.folio].filter(Boolean).join("-") || "(sin folio)";
+
+  // Complemento de pago 2.0
+  for (const p of porNombre(comp, "Pago")) {
+    cfdi.pagos.push({
+      fechaPago: attr(p, "FechaPago"),
+      monto: num(attr(p, "Monto")),
+      formaPago: attr(p, "FormaDePagoP"),
+      documentos: hijosPorNombre(p, "DoctoRelacionado").map(d => ({
+        uuid: attr(d, "IdDocumento").toUpperCase(),
+        saldoAnterior: num(attr(d, "ImpSaldoAnt")),
+        pagado: num(attr(d, "ImpPagado"))
+      }))
+    });
+  }
+
+  // Clasificación desde la óptica de la empresa
+  if (cfdi.tipoComprobante === "P") cfdi.clase = "Pago";
+  else if (cfdi.tipoComprobante === "I" && cfdi.rfcEmisor === RFC_EMPRESA) cfdi.clase = "Ingreso";
+  else if (cfdi.tipoComprobante === "I" && cfdi.rfcReceptor === RFC_EMPRESA) cfdi.clase = "Gasto";
+  else cfdi.clase = "Otro";
+
+  return cfdi;
+}
+
+/* ============================================================
+   ANÁLISIS
+   ============================================================ */
+
+function analizar(cfdis) {
+  const ingresos = cfdis.filter(c => c.clase === "Ingreso");
+  const gastos = cfdis.filter(c => c.clase === "Gasto");
+  const pagos = cfdis.filter(c => c.clase === "Pago");
+  const otros = cfdis.filter(c => c.clase === "Otro");
+
+  const redondear = n => Math.round(n * 100) / 100;
+  const ivaTrasladado = redondear(ingresos.reduce((s, c) => s + c.iva, 0));
+  const ivaAcreditable = redondear(gastos.reduce((s, c) => s + c.iva, 0));
+  const ivaPorPagar = redondear(ivaTrasladado - ivaAcreditable);
+
+  const hallazgos = [];
+  const agregar = (cfdi, tipo, severidad, detalle, riesgo) =>
+    hallazgos.push({ tipo, severidad, folio: cfdi.serieFolio, archivo: cfdi.archivo, uuid: cfdi.uuid, detalle, riesgo });
+
+  // 1. REP extemporáneo
+  for (const rep of pagos) {
+    const tardios = rep.pagos.filter(p => p.fechaPago && esREPExtemporaneo(rep.fecha, p.fechaPago));
+    if (!tardios.length) continue;
+    // Se reporta contra el pago más antiguo (el plazo más estricto)
+    const p = tardios.slice().sort((a, b) => a.fechaPago.localeCompare(b.fechaPago))[0];
+    const limite = fechaLimiteREP(p.fechaPago);
+    const dias = Math.round((Date.parse(rep.fecha.slice(0, 10)) - Date.parse(limite)) / 86400000);
+    const propio = rep.rfcEmisor === RFC_EMPRESA;
+    agregar(rep, "REP extemporáneo", GRAVE,
+      `Pago recibido el ${fmtFecha(p.fechaPago)}; el REP debió emitirse a más tardar el ${fmtFecha(limite)} ` +
+      `y se emitió el ${fmtFecha(rep.fecha)} (${dias} día${dias === 1 ? "" : "s"} de atraso).`,
+      propio
+        ? "Incumplimiento de la Regla 2.7.1.32 RMF y del Art. 29 CFF; infracción sancionable (Arts. 83 fr. VII y 84 fr. IV CFF). El cliente puede cuestionar la deducción o el acreditamiento del IVA."
+        : "El proveedor emitió el REP fuera de plazo (Regla 2.7.1.32 RMF): riesgo en la deducción y en el acreditamiento del IVA pagado.");
+  }
+
+  // 2. Método / forma de pago incongruente
+  for (const c of cfdis) {
+    if (c.metodoPago === "PUE" && c.formaPago === "99") {
+      agregar(c, "Método/forma de pago incongruente", GRAVE,
+        `MetodoPago="PUE" (pago en una sola exhibición) con FormaPago="99" (por definir). ` +
+        `Total ${fmtMoneda(c.total)}.`,
+        "Si el pago se liquidó al emitir, la forma de pago debe ser la real; si no, debió emitirse como PPD con REP. Riesgo de rechazo de la deducción (Art. 27 fr. III LISR) y del acreditamiento del IVA.");
+    }
+  }
+
+  // 3. IVA que no equivale al 16% del subtotal
+  for (const c of cfdis) {
+    if ((c.clase !== "Ingreso" && c.clase !== "Gasto") || !c.tieneIva16) continue;
+    const esperado = redondear((c.subtotal - c.descuento) * TASA_IVA);
+    const diferencia = redondear(c.iva - esperado);
+    if (Math.abs(diferencia) > TOLERANCIA_IVA) {
+      agregar(c, "IVA que no cuadra", GRAVE,
+        `Subtotal ${fmtMoneda(c.subtotal - c.descuento)} × 16% = ${fmtMoneda(esperado)}; ` +
+        `IVA trasladado en el CFDI ${fmtMoneda(c.iva)} (diferencia ${fmtMoneda(diferencia)}).`,
+        c.clase === "Ingreso"
+          ? "IVA trasladado incorrecto: posible IVA causado omitido y diferencias con lo declarado (carta invitación). Evaluar cancelación y sustitución del CFDI."
+          : "El IVA acreditable no puede exceder el efectivamente trasladado conforme a la ley; solicitar al proveedor la sustitución del CFDI.");
+    }
+  }
+
+  // 4. Facturas de ingreso PPD sin complemento de pago en el lote
+  const uuidsRelacionados = new Set();
+  const relacionesPorMonto = []; // para CFDIs sin UUID válido
+  for (const rep of pagos) {
+    for (const p of rep.pagos) {
+      for (const d of p.documentos) {
+        uuidsRelacionados.add(d.uuid);
+        relacionesPorMonto.push({ emisor: rep.rfcEmisor, receptor: rep.rfcReceptor, saldoAnterior: d.saldoAnterior, usado: false });
+      }
+    }
+  }
+  for (const c of ingresos) {
+    if (c.metodoPago !== "PPD") continue;
+    if (c.uuidValido) {
+      if (uuidsRelacionados.has(c.uuid.toUpperCase())) continue;
+    } else {
+      // Sin UUID válido no es posible cruzar por UUID; se cruza por RFC del cliente
+      // y saldo anterior del documento relacionado (= total de la factura).
+      const rel = relacionesPorMonto.find(r => !r.usado && r.emisor === c.rfcEmisor &&
+        r.receptor === c.rfcReceptor && Math.abs(r.saldoAnterior - c.total) <= 0.01);
+      if (rel) { rel.usado = true; continue; }
+    }
+    agregar(c, "PPD sin complemento de pago", OBSERVABLE,
+      `Factura PPD del ${fmtFecha(c.fecha)} a ${c.rfcReceptor} por ${fmtMoneda(c.total)} ` +
+      `sin REP en el lote que la relacione` + (c.uuidValido ? "." : " (cruce por RFC y monto: el CFDI no tiene UUID válido)."),
+      "Si ya se cobró, falta emitir el REP (Regla 2.7.1.32 RMF). El IVA se causa al cobro (Art. 1-B LIVA); verificar si el cobro ocurrió y en qué periodo se declaró.");
+  }
+
+  const orden = { [GRAVE]: 0, [OBSERVABLE]: 1 };
+  hallazgos.sort((a, b) => orden[a.severidad] - orden[b.severidad] || a.tipo.localeCompare(b.tipo) || a.folio.localeCompare(b.folio));
+
+  // Avisos de calidad de datos (no son hallazgos fiscales)
+  const avisos = [];
+  const sinUuid = cfdis.filter(c => !c.uuidValido);
+  if (sinUuid.length) {
+    avisos.push({
+      texto: `${sinUuid.length} CFDI${sinUuid.length === 1 ? "" : "s"} sin UUID válido en el Timbre Fiscal Digital. ` +
+        "Verifique que los XML sean los timbrados por el PAC. Para las facturas PPD se cruzó contra los REP por RFC y monto.",
+      archivos: sinUuid.map(c => `${c.archivo} (UUID: "${c.uuid || "vacío"}")`)
+    });
+  }
+  const conteoUuid = {};
+  for (const c of cfdis) if (c.uuidValido) (conteoUuid[c.uuid.toUpperCase()] = conteoUuid[c.uuid.toUpperCase()] || []).push(c.archivo);
+  const duplicados = Object.entries(conteoUuid).filter(([, a]) => a.length > 1);
+  if (duplicados.length) {
+    avisos.push({
+      texto: `${duplicados.length} UUID repetido${duplicados.length === 1 ? "" : "s"} en el lote (posible XML cargado dos veces; los importes se sumaron más de una vez).`,
+      archivos: duplicados.map(([u, a]) => `${u}: ${a.join(", ")}`)
+    });
+  }
+  if (otros.length) {
+    avisos.push({
+      texto: `${otros.length} CFDI${otros.length === 1 ? "" : "s"} que no son ingreso, gasto ni pago de ${RFC_EMPRESA} (egresos, nómina, traslados o de terceros). Se muestran en el detalle, pero no entran en la conciliación del IVA.`,
+      archivos: otros.map(c => `${c.archivo} (tipo ${c.tipoComprobante || "?"})`)
+    });
+  }
+
+  return {
+    cfdis, ingresos, gastos, pagos, otros, hallazgos, avisos,
+    ivaTrasladado, ivaAcreditable, ivaPorPagar
+  };
+}
+
+/* ============================================================
+   FORMATO
+   ============================================================ */
+const fmtMX = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" });
+function fmtMoneda(n) { return fmtMX.format(n); }
+function fmtFecha(f) {
+  if (!f) return "";
+  const [a, m, d] = f.slice(0, 10).split("-");
+  return `${d}/${m}/${a}`;
+}
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+}
+
+/* ============================================================
+   CARGA DE ARCHIVOS
+   ============================================================ */
+let resultado = null;
+let errores = [];
+
+const $ = id => document.getElementById(id);
+$("rfcEmpresa").textContent = RFC_EMPRESA;
+
+// Recorre carpetas soltadas con arrastrar y soltar
+function leerEntrada(entry) {
+  return new Promise(resolve => {
+    if (entry.isFile) {
+      entry.file(f => resolve([f]), () => resolve([]));
+    } else if (entry.isDirectory) {
+      const lector = entry.createReader();
+      const todos = [];
+      const leerLote = () => lector.readEntries(async lote => {
+        if (!lote.length) {
+          const anidados = await Promise.all(todos.map(leerEntrada));
+          resolve(anidados.flat());
+        } else {
+          todos.push(...lote);
+          leerLote();
+        }
+      }, () => resolve([]));
+      leerLote();
+    } else {
+      resolve([]);
+    }
+  });
+}
+
+async function procesarArchivos(lista) {
+  const archivos = Array.from(lista).filter(f => /\.xml$/i.test(f.name));
+  const ignorados = lista.length - archivos.length;
+  if (!archivos.length) {
+    $("progress").textContent = "No se encontraron archivos .xml en la selección.";
+    return;
+  }
+  $("progress").textContent = `Leyendo ${archivos.length} archivos…`;
+
+  const cfdis = [];
+  errores = [];
+  const TAM_LOTE = 50;
+  for (let i = 0; i < archivos.length; i += TAM_LOTE) {
+    const lote = archivos.slice(i, i + TAM_LOTE);
+    const textos = await Promise.all(lote.map(f => f.text().then(t => ({ f, t }), e => ({ f, e }))));
+    for (const { f, t, e } of textos) {
+      const nombre = f.webkitRelativePath || f.name;
+      if (e) { errores.push({ archivo: nombre, motivo: "No se pudo leer el archivo" }); continue; }
+      try {
+        cfdis.push(parsearCFDI(t, f.name));
+      } catch (err) {
+        errores.push({ archivo: nombre, motivo: err.message });
+      }
+    }
+    $("progress").textContent = `Procesados ${Math.min(i + TAM_LOTE, archivos.length)} de ${archivos.length}…`;
+    await new Promise(r => setTimeout(r, 0)); // deja respirar a la interfaz
+  }
+
+  resultado = analizar(cfdis);
+  resultado.ignorados = ignorados;
+  resultado.fechaAnalisis = new Date();
+  mostrarResultados();
+}
+
+const dz = $("dropzone");
+["dragenter", "dragover"].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add("over"); }));
+["dragleave", "drop"].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove("over"); }));
+dz.addEventListener("drop", async e => {
+  const items = Array.from(e.dataTransfer.items || []);
+  let archivos;
+  if (items.length && items[0].webkitGetAsEntry) {
+    const entradas = items.map(i => i.webkitGetAsEntry()).filter(Boolean);
+    archivos = (await Promise.all(entradas.map(leerEntrada))).flat();
+  } else {
+    archivos = Array.from(e.dataTransfer.files);
+  }
+  procesarArchivos(archivos);
+});
+// Evita que el navegador abra el archivo si se suelta fuera de la zona
+["dragover", "drop"].forEach(ev => window.addEventListener(ev, e => e.preventDefault()));
+
+$("btnArchivos").addEventListener("click", () => $("inputArchivos").click());
+$("btnCarpeta").addEventListener("click", () => $("inputCarpeta").click());
+$("inputArchivos").addEventListener("change", e => { procesarArchivos(e.target.files); e.target.value = ""; });
+$("inputCarpeta").addEventListener("change", e => { procesarArchivos(e.target.files); e.target.value = ""; });
+
+$("btnOtroLote").addEventListener("click", () => {
+  resultado = null;
+  errores = [];
+  $("resultados").classList.add("hidden");
+  $("carga").classList.remove("hidden");
+  $("progress").textContent = "";
+  $("detalleCfdis").open = false;
+  window.scrollTo(0, 0);
+});
+$("btnExcel").addEventListener("click", descargarExcel);
+
+/* ============================================================
+   PRESENTACIÓN EN PANTALLA
+   ============================================================ */
+function indicadores(r) {
+  return [
+    ["CFDIs procesados", r.cfdis.length, "n"],
+    ["Ingresos", r.ingresos.length, "n"],
+    ["Gastos", r.gastos.length, "n"],
+    ["Pagos (REP)", r.pagos.length, "n"],
+    ["IVA trasladado", r.ivaTrasladado, "$"],
+    ["IVA acreditable", r.ivaAcreditable, "$"],
+    ["IVA por pagar estimado", r.ivaPorPagar, "$"],
+    ["Total de hallazgos", r.hallazgos.length, "n"]
+  ];
+}
+
+function mostrarResultados() {
+  const r = resultado;
+  $("carga").classList.add("hidden");
+  $("resultados").classList.remove("hidden");
+
+  const graves = r.hallazgos.filter(h => h.severidad === GRAVE).length;
+  $("metaLote").textContent =
+    `Empresa ${RFC_EMPRESA} · ${r.cfdis.length} CFDIs analizados` +
+    (errores.length ? ` · ${errores.length} archivo${errores.length === 1 ? "" : "s"} omitido${errores.length === 1 ? "" : "s"}` : "") +
+    ` · ${graves} grave${graves === 1 ? "" : "s"}, ${r.hallazgos.length - graves} observable${r.hallazgos.length - graves === 1 ? "" : "s"}`;
+
+  $("kpis").innerHTML = indicadores(r).map(([label, v, t]) => {
+    const cls = label === "IVA por pagar estimado" ? " highlight" : (label === "Total de hallazgos" && v > 0 ? " alert" : "");
+    return `<div class="kpi${cls}"><div class="label">${esc(label)}</div><div class="value">${t === "$" ? fmtMoneda(v) : v.toLocaleString("es-MX")}</div></div>`;
+  }).join("");
+
+  // Errores de lectura y avisos de calidad de datos
+  let avisosHtml = "";
+  if (errores.length) {
+    avisosHtml += `<div class="notice error"><b>${errores.length} archivo${errores.length === 1 ? "" : "s"} no se pudo${errores.length === 1 ? "" : "ieron"} procesar y se omitió${errores.length === 1 ? "" : "eron"}:</b><ul>` +
+      errores.map(e => `<li>${esc(e.archivo)}: ${esc(e.motivo)}</li>`).join("") + "</ul></div>";
+  }
+  for (const a of r.avisos) {
+    avisosHtml += `<div class="notice"><details><summary style="font-size:14px;font-weight:600">${esc(a.texto)}</summary><ul>` +
+      a.archivos.map(x => `<li>${esc(x)}</li>`).join("") + "</ul></details></div>";
+  }
+  $("avisos").innerHTML = avisosHtml;
+
+  $("hallazgos").innerHTML = r.hallazgos.length
+    ? r.hallazgos.map(h => `
+      <div class="finding${h.severidad === GRAVE ? " grave" : ""}">
+        <div class="head">
+          <span class="badge">${esc(h.severidad)}</span>
+          <span class="tipo">${esc(h.tipo)}</span>
+          <span class="ref">Folio ${esc(h.folio)} · ${esc(h.archivo)}</span>
+        </div>
+        <div class="detalle">${esc(h.detalle)}</div>
+        <div class="riesgo"><b>Riesgo fiscal:</b> ${esc(h.riesgo)}</div>
+      </div>`).join("")
+    : `<p class="empty">No se detectaron hallazgos en este lote.</p>`;
+
+  const filas = filasDetalle(r);
+  $("numDetalle").textContent = filas.length;
+  const cols = COLUMNAS_DETALLE;
+  $("tablaDetalle").innerHTML =
+    "<thead><tr>" + cols.map(c => `<th class="${c.num ? "num" : ""}">${esc(c.titulo)}</th>`).join("") + "</tr></thead><tbody>" +
+    filas.map(f => "<tr>" + cols.map(c => {
+      const v = f[c.titulo];
+      return `<td class="${c.num ? "num" : ""}">${c.num ? (v === "" ? "" : fmtMoneda(v)) : esc(v)}</td>`;
+    }).join("") + "</tr>").join("") + "</tbody>";
+  window.scrollTo(0, 0);
+}
+
+/* ============================================================
+   DETALLE (compartido por pantalla y Excel)
+   ============================================================ */
+const COLUMNAS_DETALLE = [
+  { titulo: "Archivo" }, { titulo: "Clase" }, { titulo: "Tipo" }, { titulo: "Serie-Folio" },
+  { titulo: "Fecha" }, { titulo: "RFC emisor" }, { titulo: "RFC receptor" },
+  { titulo: "Subtotal", num: true }, { titulo: "IVA trasladado", num: true }, { titulo: "Total", num: true },
+  { titulo: "Método pago" }, { titulo: "Forma pago" }, { titulo: "UUID" },
+  { titulo: "Fecha de pago (REP)" }, { titulo: "Monto pagado (REP)", num: true }, { titulo: "UUID relacionados (REP)" },
+  { titulo: "Hallazgos" }
+];
+
+function filasDetalle(r) {
+  const porArchivo = {};
+  for (const h of r.hallazgos) (porArchivo[h.archivo] = porArchivo[h.archivo] || []).push(h.tipo);
+  const orden = { Ingreso: 0, Gasto: 1, Pago: 2, Otro: 3 };
+  return r.cfdis.slice()
+    .sort((a, b) => orden[a.clase] - orden[b.clase] || a.serieFolio.localeCompare(b.serieFolio))
+    .map(c => {
+      const esPago = c.clase === "Pago";
+      return {
+        "Archivo": c.archivo,
+        "Clase": c.clase,
+        "Tipo": c.tipoComprobante,
+        "Serie-Folio": c.serieFolio,
+        "Fecha": c.fecha.replace("T", " "),
+        "RFC emisor": c.rfcEmisor,
+        "RFC receptor": c.rfcReceptor,
+        "Subtotal": esPago ? "" : c.subtotal,
+        "IVA trasladado": esPago ? "" : c.iva,
+        "Total": esPago ? "" : c.total,
+        "Método pago": c.metodoPago,
+        "Forma pago": esPago ? c.pagos.map(p => p.formaPago).join(", ") : c.formaPago,
+        "UUID": c.uuid,
+        "Fecha de pago (REP)": c.pagos.map(p => p.fechaPago.replace("T", " ")).join(", "),
+        "Monto pagado (REP)": esPago ? Math.round(c.pagos.reduce((s, p) => s + p.monto, 0) * 100) / 100 : "",
+        "UUID relacionados (REP)": c.pagos.flatMap(p => p.documentos.map(d => d.uuid)).join(", "),
+        "Hallazgos": (porArchivo[c.archivo] || []).join("; ")
+      };
+    });
+}
+
+/* ============================================================
+   EXCEL
+   ============================================================ */
+function descargarExcel() {
+  if (!resultado) return;
+  if (typeof XLSX === "undefined") {
+    alert("No se pudo cargar el componente para generar Excel (requiere conexión a internet la primera vez que se abre la página).");
+    return;
+  }
+  const r = resultado;
+  const wb = XLSX.utils.book_new();
+
+  // Resumen
+  const resumen = [
+    ["Reporte de revisión de CFDIs"],
+    ["Empresa (RFC)", RFC_EMPRESA],
+    ["Fecha del análisis", r.fechaAnalisis.toLocaleString("es-MX")],
+    [],
+    ["Indicador", "Valor"],
+    ...indicadores(r).map(([l, v]) => [l, v]),
+    [],
+    ["Hallazgos por tipo", "Cantidad"],
+    ...Object.entries(r.hallazgos.reduce((acc, h) => (acc[h.tipo] = (acc[h.tipo] || 0) + 1, acc), {})),
+    [],
+    ["Hallazgos graves", r.hallazgos.filter(h => h.severidad === GRAVE).length],
+    ["Hallazgos observables", r.hallazgos.filter(h => h.severidad === OBSERVABLE).length],
+    ["Archivos omitidos (no legibles)", errores.length]
+  ];
+  if (errores.length || r.avisos.length) {
+    resumen.push([], ["Avisos"]);
+    for (const e of errores) resumen.push(["Archivo omitido", `${e.archivo}: ${e.motivo}`]);
+    for (const a of r.avisos) resumen.push(["Calidad de datos", a.texto]);
+  }
+  resumen.push([], ["Nota", "El IVA por pagar es una estimación: IVA trasladado de ingresos menos IVA acreditable de gastos del lote, sin considerar flujo de efectivo, retenciones ni saldos a favor."]);
+  const wsR = XLSX.utils.aoa_to_sheet(resumen);
+  wsR["!cols"] = [{ wch: 34 }, { wch: 22 }];
+  aplicarFormatoMoneda(wsR, 1, ["IVA trasladado", "IVA acreditable", "IVA por pagar estimado"]);
+  XLSX.utils.book_append_sheet(wb, wsR, "Resumen");
+
+  // Hallazgos
+  const wsH = XLSX.utils.json_to_sheet(r.hallazgos.map(h => ({
+    "Severidad": h.severidad, "Tipo": h.tipo, "Folio": h.folio, "Archivo": h.archivo,
+    "UUID": h.uuid, "Detalle": h.detalle, "Riesgo fiscal": h.riesgo
+  })), { header: ["Severidad", "Tipo", "Folio", "Archivo", "UUID", "Detalle", "Riesgo fiscal"] });
+  wsH["!cols"] = [{ wch: 11 }, { wch: 32 }, { wch: 12 }, { wch: 22 }, { wch: 38 }, { wch: 90 }, { wch: 90 }];
+  XLSX.utils.book_append_sheet(wb, wsH, "Hallazgos");
+
+  // Detalle
+  const filas = filasDetalle(r);
+  const wsD = XLSX.utils.json_to_sheet(filas, { header: COLUMNAS_DETALLE.map(c => c.titulo) });
+  wsD["!cols"] = COLUMNAS_DETALLE.map(c => ({ wch: c.num ? 15 : (c.titulo.startsWith("UUID") ? 38 : 16) }));
+  const rango = XLSX.utils.decode_range(wsD["!ref"]);
+  COLUMNAS_DETALLE.forEach((c, j) => {
+    if (!c.num) return;
+    for (let i = 1; i <= rango.e.r; i++) {
+      const celda = wsD[XLSX.utils.encode_cell({ r: i, c: j })];
+      if (celda && celda.t === "n") celda.z = "#,##0.00";
+    }
+  });
+  XLSX.utils.book_append_sheet(wb, wsD, "Detalle");
+
+  XLSX.writeFile(wb, "Reporte_CFDIs.xlsx");
+}
+
+function aplicarFormatoMoneda(ws, col, etiquetas) {
+  const rango = XLSX.utils.decode_range(ws["!ref"]);
+  for (let i = 0; i <= rango.e.r; i++) {
+    const et = ws[XLSX.utils.encode_cell({ r: i, c: 0 })];
+    const celda = ws[XLSX.utils.encode_cell({ r: i, c: col })];
+    if (et && celda && etiquetas.includes(et.v) && celda.t === "n") celda.z = "$#,##0.00";
+  }
+}
+</script>
+</body>
+</html>
