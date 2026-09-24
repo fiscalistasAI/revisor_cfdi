@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd" Version="4.0" Serie="A" Folio="0049" Fecha="2026-03-09T13:00:00" FormaPago="03" NoCertificado="30001000000500003416" SubTotal="10166.89" Moneda="MXN" Total="11793.59" TipoDeComprobante="I" Exportacion="01" MetodoPago="PUE" LugarExpedicion="64000" Certificado="RELLENO" Sello="RELLENO==">
+  <cfdi:Emisor Rfc="DRE180420QX3" Nombre="DISTRIBUIDORA REGIOMONTANA" RegimenFiscal="601"/>
+  <cfdi:Receptor Rfc="TEC110930XY8" Nombre="TECNOLOGIA APLICADA" DomicilioFiscalReceptor="64000" RegimenFiscalReceptor="601" UsoCFDI="G01"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="78181500" Cantidad="1" ClaveUnidad="E48" Descripcion="Servicio de logística" ValorUnitario="10166.89" Importe="10166.89" ObjetoImp="02">
+      <cfdi:Impuestos><cfdi:Traslados><cfdi:Traslado Base="10166.89" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="1626.70"/></cfdi:Traslados></cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="1626.70">
+    <cfdi:Traslados><cfdi:Traslado Base="10166.89" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="1626.70"/></cfdi:Traslados>
+  </cfdi:Impuestos>
+  <cfdi:Complemento><tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd" Version="1.1" UUID="%s" FechaTimbrado="%s" RfcProvCertif="SAT970701NN3" SelloCFD="RELLENO_NO_VALIDO==" NoCertificadoSAT="30001000000500003456" SelloSAT="RELLENO_NO_VALIDO=="/></cfdi:Complemento>
+</cfdi:Comprobante>

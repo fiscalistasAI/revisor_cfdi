@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd" Version="4.0" Serie="A" Folio="0019" Fecha="2026-03-16T12:00:00" FormaPago="03" NoCertificado="30001000000500003416" SubTotal="62357.11" Moneda="MXN" Total="72334.25" TipoDeComprobante="I" Exportacion="01" MetodoPago="PUE" LugarExpedicion="64000" Certificado="RELLENO" Sello="RELLENO==">
+  <cfdi:Emisor Rfc="DRE180420QX3" Nombre="DISTRIBUIDORA REGIOMONTANA" RegimenFiscal="601"/>
+  <cfdi:Receptor Rfc="PROV850612RR2" Nombre="PROVEEDORA NORTENA" DomicilioFiscalReceptor="64000" RegimenFiscalReceptor="601" UsoCFDI="I08"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="44121600" Cantidad="1" ClaveUnidad="H87" Descripcion="Artículos de oficina" ValorUnitario="62357.11" Importe="62357.11" ObjetoImp="02">
+      <cfdi:Impuestos><cfdi:Traslados><cfdi:Traslado Base="62357.11" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="9977.14"/></cfdi:Traslados></cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="9977.14">
+    <cfdi:Traslados><cfdi:Traslado Base="62357.11" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="9977.14"/></cfdi:Traslados>
+  </cfdi:Impuestos>
+  <cfdi:Complemento><tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd" Version="1.1" UUID="%s" FechaTimbrado="%s" RfcProvCertif="SAT970701NN3" SelloCFD="RELLENO_NO_VALIDO==" NoCertificadoSAT="30001000000500003456" SelloSAT="RELLENO_NO_VALIDO=="/></cfdi:Complemento>
+</cfdi:Comprobante>

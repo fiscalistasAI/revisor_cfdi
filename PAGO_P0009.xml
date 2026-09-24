@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:pago20="http://www.sat.gob.mx/Pagos20" xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd http://www.sat.gob.mx/Pagos20 http://www.sat.gob.mx/sitio_internet/cfd/Pagos/Pagos20.xsd" Version="4.0" Serie="P" Folio="P0009" Fecha="2026-04-11T12:00:00" NoCertificado="30001000000500003416" SubTotal="0" Moneda="XXX" Total="0" TipoDeComprobante="P" Exportacion="01" LugarExpedicion="64000" Certificado="RELLENO" Sello="RELLENO==">
+  <cfdi:Emisor Rfc="DRE180420QX3" Nombre="DISTRIBUIDORA REGIOMONTANA" RegimenFiscal="601"/>
+  <cfdi:Receptor Rfc="XAXX010101000" Nombre="PUBLICO EN GENERAL" DomicilioFiscalReceptor="64000" RegimenFiscalReceptor="616" UsoCFDI="CP01"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="84111506" Cantidad="1" ClaveUnidad="ACT" Descripcion="Pago" ValorUnitario="0" Importe="0" ObjetoImp="01"/>
+  </cfdi:Conceptos>
+  <cfdi:Complemento>
+    <pago20:Pagos Version="2.0">
+      <pago20:Totales MontoTotalPagos="71570.65"/>
+      <pago20:Pago FechaPago="2026-03-17T11:00:00" FormaDePagoP="03" MonedaP="MXN" TipoCambioP="1" Monto="71570.65">
+        <pago20:DoctoRelacionado IdDocumento="1943D732-32C1-4E09-DBE6-1D9485C12EDF" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="71570.65" ImpPagado="71570.65" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="61698.84" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="9871.81"/>
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+      </pago20:Pago>
+    </pago20:Pagos>
+  </cfdi:Complemento>
+  <cfdi:Complemento><tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd" Version="1.1" UUID="1169ED4B-D3B3-FA0E-AE53-C496DCE8A6F1" FechaTimbrado="2026-04-11T12:00:00" RfcProvCertif="SAT970701NN3" SelloCFD="RELLENO==" NoCertificadoSAT="30001000000500003456" SelloSAT="RELLENO=="/></cfdi:Complemento>
+</cfdi:Comprobante>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd" Version="4.0" Serie="A" Folio="0062" Fecha="2026-03-16T12:00:00" FormaPago="99" NoCertificado="30001000000500003416" SubTotal="55625.40" Moneda="MXN" Total="64525.46" TipoDeComprobante="I" Exportacion="01" MetodoPago="PPD" LugarExpedicion="64000" Certificado="RELLENO" Sello="RELLENO==">
+  <cfdi:Emisor Rfc="DRE180420QX3" Nombre="DISTRIBUIDORA REGIOMONTANA" RegimenFiscal="601"/>
+  <cfdi:Receptor Rfc="IND150720AB1" Nombre="INDUSTRIAS DEL PONIENTE" DomicilioFiscalReceptor="64000" RegimenFiscalReceptor="601" UsoCFDI="I08"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="15101500" Cantidad="1" ClaveUnidad="LTR" Descripcion="Combustible" ValorUnitario="55625.40" Importe="55625.40" ObjetoImp="02">
+      <cfdi:Impuestos><cfdi:Traslados><cfdi:Traslado Base="55625.40" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="8900.06"/></cfdi:Traslados></cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="8900.06">
+    <cfdi:Traslados><cfdi:Traslado Base="55625.40" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="8900.06"/></cfdi:Traslados>
+  </cfdi:Impuestos>
+  <cfdi:Complemento><tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd" Version="1.1" UUID="%s" FechaTimbrado="%s" RfcProvCertif="SAT970701NN3" SelloCFD="RELLENO_NO_VALIDO==" NoCertificadoSAT="30001000000500003456" SelloSAT="RELLENO_NO_VALIDO=="/></cfdi:Complemento>
+</cfdi:Comprobante>
